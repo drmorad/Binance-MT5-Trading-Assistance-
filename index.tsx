@@ -144,7 +144,10 @@ class TradingAssistantApp {
         // Core Event Listeners
         this.promptForm.addEventListener('submit', (e) => this.handlePromptSubmit(e));
         this.clearHistoryButton.addEventListener('click', () => this.clearHistory());
+        
+        // FIX: Ensure the print button event listener is robustly attached.
         this.printPdfButton.addEventListener('click', () => this.printChat());
+
         this.headerButtons.forEach(button => {
             button.addEventListener('click', (e) => this.handleHeaderAction(e));
         });
@@ -256,7 +259,9 @@ class TradingAssistantApp {
         
         messageElement.appendChild(contentWrapper);
         this.chatContainer.appendChild(messageElement);
-        this.addCopyButtons();
+        
+        this.addCopyButtonToMessage(messageElement); // Add copy button to message
+        this.addCopyButtonsToCodeBlocks(); // Add copy buttons to code blocks
         this.highlightCode();
         this.scrollToBottom();
         return messageElement;
@@ -294,7 +299,7 @@ class TradingAssistantApp {
         }
     }
 
-    private addCopyButtons(): void {
+    private addCopyButtonsToCodeBlocks(): void {
         const codeBlocks = this.chatContainer.querySelectorAll('pre');
         codeBlocks.forEach(block => {
             if (block.querySelector('.copy-code-button')) {
@@ -303,10 +308,12 @@ class TradingAssistantApp {
             const button = document.createElement('button');
             button.className = 'copy-code-button';
             button.textContent = 'Copy';
+            button.setAttribute('aria-label', 'Copy code block');
             block.appendChild(button);
 
             button.addEventListener('click', () => {
-                const code = block.querySelector('code')?.innerText || '';
+                // FIX: Cast querySelector result to HTMLElement to access innerText
+                const code = (block.querySelector('code') as HTMLElement)?.innerText || '';
                 navigator.clipboard.writeText(code).then(() => {
                     button.textContent = 'Copied!';
                     setTimeout(() => {
@@ -316,6 +323,35 @@ class TradingAssistantApp {
                     console.error('Failed to copy text: ', err);
                     button.textContent = 'Error';
                 });
+            });
+        });
+    }
+
+    private addCopyButtonToMessage(messageElement: HTMLElement): void {
+        const button = document.createElement('button');
+        button.className = 'copy-message-button';
+        button.setAttribute('aria-label', 'Copy message');
+        button.title = 'Copy message';
+        button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
+        
+        const icon = button.querySelector('svg')!;
+        
+        messageElement.appendChild(button);
+
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // FIX: Cast querySelector result to HTMLElement to access innerText
+            const content = (messageElement.querySelector('.message-content') as HTMLElement)?.innerText || '';
+            navigator.clipboard.writeText(content).then(() => {
+                icon.innerHTML = `<path d="M0 0h24v24H0V0z" fill="none"/><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>`; // Checkmark icon
+                button.title = 'Copied!';
+                setTimeout(() => {
+                    icon.innerHTML = `<path d="M0 0h24v24H0V0z" fill="none"/><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>`; // Original icon
+                    button.title = 'Copy message';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy message: ', err);
+                button.title = 'Error copying';
             });
         });
     }
@@ -347,7 +383,7 @@ class TradingAssistantApp {
                 for await (const chunk of result) {
                     aiResponse += chunk.text;
                     contentWrapper.innerHTML = marked.parse(aiResponse) as string;
-                    this.addCopyButtons();
+                    this.addCopyButtonsToCodeBlocks();
                     this.highlightCode();
                     this.scrollToBottom();
                 }

@@ -209,6 +209,7 @@ header .header-content p {
 }
 
 .message {
+    position: relative;
     max-width: 85%;
     margin-bottom: 1.5rem;
     padding: 1rem 1.25rem;
@@ -316,6 +317,33 @@ header .header-content p {
 
 .copy-code-button:hover {
     background-color: #4a515c;
+    color: var(--text-color);
+}
+
+.copy-message-button {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background-color: var(--background-color);
+    color: var(--text-color-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s ease;
+}
+
+.message:hover .copy-message-button {
+    opacity: 1;
+}
+
+.copy-message-button:hover {
+    background-color: var(--border-color);
     color: var(--text-color);
 }
 
@@ -615,7 +643,7 @@ dialog input:focus, dialog select:focus {
         display: block;
         overflow: visible;
     }
-    header, footer, .header-actions, .copy-code-button {
+    header, footer, .header-actions, .copy-code-button, .copy-message-button {
         display: none;
     }
     .main-content {
